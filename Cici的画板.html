@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cici的画板</title>
+    <!-- <link rel="stylesheet" href="http://at.alicdn.com/t/font_584725_0nyjbeaxjw2ep14i.css"> -->
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/5.15.3/css/all.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+        
+        body {
+            overflow: hidden
+        }
+        
+        #drawing-board {
+            background: white;
+            position: fixed;
+            display: block;
+            cursor: crosshair;
+            z-index: -1;
+        }
+        
+        .tools {
+            position: fixed;
+            left: 0;
+            bottom: 30px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            text-align: center
+        }
+        
+        .tools button {
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border: 1px solid #eee;
+            outline: none;
+            cursor: pointer;
+            box-sizing: border-box;
+            margin: 0 20px;
+            text-align: center;
+            color: #ccc;
+            line-height: 50px;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+            transition: 0.3s;
+        }
+        
+        .tools button.active,
+        .tools button:active {
+            box-shadow: 0 0 15px #00CCFF;
+            color: #00CCFF;
+        }
+        
+        .tools button i {
+            font-size: 25px;
+            height: 20px;
+            line-height: 20px;
+        }
+        
+        .color-group {
+            position: fixed;
+            width: 30px;
+            left: 30px;
+            top: 50%;
+            transform: translate(0, -150px)
+        }
+        
+        .color-group ul {
+            list-style: none;
+        }
+        
+        .color-group ul li {
+            width: 30px;
+            height: 30px;
+            margin: 10px 0;
+            border-radius: 50%;
+            box-sizing: border-box;
+            border: 3px solid white;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .color-group ul li.active {
+            box-shadow: 0 0 15px #00CCFF;
+        }
+        
+        #range-wrap {
+            position: fixed;
+            top: 50%;
+            right: 30px;
+            width: 30px;
+            height: 150px;
+            margin-top: -75px;
+        }
+        
+        #range-wrap input {
+            transform: rotate(-90deg);
+            width: 150px;
+            height: 20px;
+            margin: 0;
+            transform-origin: 75px 75px;
+            border-radius: 15px;
+            -webkit-appearance: none;
+            outline: none;
+            position: relative;
+        }
+        
+        #range-wrap input::after {
+            display: block;
+            content: "";
+            width: 0;
+            height: 0;
+            border: 5px solid transparent;
+            border-right: 150px solid #00CCFF;
+            border-left-width: 0;
+            position: absolute;
+            left: 0;
+            top: 5px;
+            border-radius: 15px;
+            z-index: 0;
+        }
+        
+        #range-wrap input[type=range]::-webkit-slider-thumb,
+        #range-wrap input[type=range]::-moz-range-thumb {
+            -webkit-appearance: none;
+        }
+        
+        #range-wrap input[type=range]::-webkit-slider-runnable-track,
+        #range-wrap input[type=range]::-moz-range-track {
+            height: 10px;
+            border-radius: 10px;
+            box-shadow: none;
+        }
+        
+        #range-wrap input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            margin-top: -1px;
+            background: #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #00CCFF;
+            position: relative;
+            z-index: 999;
+        }
+        
+        @media screen and (max-width: 768px) {
+            .tools {
+                bottom: auto;
+                top: 20px;
+            }
+            .tools button {
+                width: 35px;
+                height: 35px;
+                line-height: 35px;
+                margin-bottom: 15px;
+                box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            }
+            .tools button.active,
+            .tools button:active {
+                box-shadow: 0 0 5px #00CCFF;
+            }
+            .tools button i {
+                font-size: 18px;
+            }
+            .tools #swatches {
+                display: none
+            }
+            .color-group {
+                left: 0;
+                top: auto;
+                bottom: 20px;
+                display: flex;
+                width: 100%;
+                justify-content: center;
+                text-align: center;
+                transform: translate(0, 0)
+            }
+            .color-group ul li {
+                display: inline-block;
+                margin: 0 5px;
+            }
+            .color-group ul li.active {
+                box-shadow: 0 0 10px #00CCFF;
+            }
+            #range-wrap {
+                right: auto;
+                left: 20px;
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+    <!-- 先准备一个容器，画板 -->
+    <canvas id="drawing-board"></canvas>
+    <div class="color-group">
+        <ul>
+            <li id="white" class="color-item" style="background-color: white;"></li>
+            <li id="black" class="color-item active" style="background-color: black;"></li>
+            <li id="red" class="color-item" style="background-color: #FF3333;"></li>
+            <li id="blue" class="color-item" style="background-color: #0066FF;"></li>
+            <li id="yellow" class="color-item" style="background-color: #FFFF33;"></li>
+            <li id="green" class="color-item" style="background-color: #33CC66;"></li>
+            <li id="gray" class="color-item" style="background-color: gray;"></li>
+        </ul>
+    </div>
+    <div id="range-wrap"><input type="range" id="range" min="1" max="30" value="5" title="调整笔刷粗细"></div>
+    <div class="tools">
+        <button id="brush" class="active" title="画笔"><i class="fas fa-pencil-alt"></i></button>
+        <button id="eraser" title="橡皮擦"><i class="fas fa-eraser"></i></button>
+        <button id="clear" title="清空"><i class="far fa-trash-alt"></i></button>
+        <button id="undo" title="撤销"><i class="fas fa-undo"></i></button>
+        <button id="save" title="保存"><i class="far fa-save"></i></button>
+    </div>
+    <!-- js需要通过id去获取canvas，script标签放在body之上会找不到canvas -->
+
+</body>
+<script src="myboard.js"></script>
+
+</html>
